@@ -1,13 +1,20 @@
 class Controls {
-    constructor() {
+    constructor(type) {
         this.forward = false;
         this.left = false;
         this.right = false;
         this.reverse = false;
 
-        this.#addKeyboardListeners();   //el # porque es private
+        switch (type) {
+            case "KEYS":
+                this.#addKeyboardListeners();
+                break;
+            case "DUMMY":
+                this.forward = true;
+                break;
+        }
     }
-
+    //el simbolo # significa que es privado
     #addKeyboardListeners() {
         document.onkeydown = (event) => {
             switch (event.key) {
