@@ -12,8 +12,11 @@ class Car {
         this.angle = 0;
         this.damaged = false;
 
+        this.useBrain = controlType == "AI";
+
         if (controlType != "DUMMY") {   //para no tener rayos en todos los autos
             this.sensor = new Sensor(this);
+            this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]) //el input claramente son la cantidad de rayos, la "hidden layer" puedo colocar la cantidad de neuronas que quiera, y el output son 4 ya que puede ir derecha,izquierda,delante o atras
         }
         this.controls = new Controls(controlType);
     }
@@ -26,6 +29,18 @@ class Car {
         }
         if (this.sensor) {
             this.sensor.update(roadBorders, traffic);
+            //lo que lee el sensor, tiene un x,y,offset
+            const offsets = this.sensor.readings.map(s => s == null ? 0 : 1 - s.offset);//el offset va a ser un valor bajo si el objeto esta lejos, y mas grande si esta cerca
+            const outputs = NeuralNetwork.feedForward(offsets, this.brain);
+
+            if (this.useBrain) {//con esto deberia la maquina poder controlar el auto!
+                this.controls.forward = outputs[0];
+                this.controls.left = outputs[1];
+                this.controls.right = outputs[2];
+                this.controls.reverse = outputs[3];
+
+            }
+
         }
     }
 
@@ -105,7 +120,7 @@ class Car {
         this.y -= Math.cos(this.angle) * this.speed;
     }
 
-    draw(ctx, color) {
+    draw(ctx, color, drawSensor = false) {
         if (this.damaged) {
             ctx.fillStyle = "gray";
         } else {
@@ -118,7 +133,7 @@ class Car {
         }
         ctx.fill();
 
-        if (this.sensor) {
+        if (this.sensor && drawSensor) {
             this.sensor.draw(ctx);
         }
     }
